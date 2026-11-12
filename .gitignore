@@ -1,0 +1,8 @@
+# Übersetzungs-Zwischenergebnisse
+*.com
+*.lst
+*.o
+__pycache__/
+*.pyc
+# MAME-Schnappschüsse
+snap/
