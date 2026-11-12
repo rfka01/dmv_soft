@@ -8,7 +8,10 @@ mit Z80 und 8088 aus den 1980er-Jahren. Alles läuft unter MS-DOS 2.11
 |---|---|---|
 | DMVCMD – ANSI-Dualpanel-Dateimanager | `dmvcmd/` | v8.4, in MAME getestet |
 
-Gebaute 360-KB-Sektorabbilder liegen in `images/`.
+Gebaute 360-KB-Sektorabbilder liegen in `images/`. Es sind **reine
+Datendisketten ohne DOS** – es wird kein fremder Betriebssystemcode
+mitgeliefert. Zum Benutzen von einer eigenen DOS-Startdiskette booten und
+das Datenabbild als weiteres Laufwerk einlegen.
 
 ## Bauen
 
@@ -16,7 +19,7 @@ Gebraucht wird NASM und – zum Testen – ein MAME mit DMV-Treiber.
 
 ```
 cd dmvcmd
-sh build.sh            # -> ../images/dmvcmd.img
+sh build.sh            # -> ../images/dmvcmd.img (Datendiskette)
 ```
 
 Der Build übersetzt **nur für den 8086** (Pre-Include `cpu8086.inc`): ohne
@@ -26,4 +29,4 @@ this cpu level" fehlschlagen.
 
 ## Lizenz
 
-Eigener Code unter MIT (siehe `LICENSE`). Keine fremden Quellen im Repo.
+Eigener Code unter MIT (siehe `LICENSE`). Kein fremder Code im Repo.
