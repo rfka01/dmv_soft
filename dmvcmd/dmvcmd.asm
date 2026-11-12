@@ -718,6 +718,7 @@ pl_ready_empty:
     add si,ax
     mov byte [si],DS_READY
     pop ax
+    call sort_panel_bx       ; NC-Reihenfolge: ".." , Verzeichnisse, dann Dateien
     ret
 pl_notready:
     ; INT 24h fired: drive not ready. Empty the panel, mark NOTRDY, re-stabilise
@@ -781,6 +782,199 @@ se_attr:
     inc ax
     mov [bx+P_CNT],ax
 se_ret:
+    ret
+
+; ============================================================================
+;  sort_panel_bx - Eintraege in Panel BX in NC-Reihenfolge bringen:
+;  zuerst ".." , dann Verzeichnisse (alphabetisch), dann Dateien (alphabetisch).
+;  Einfacher Insertion-Sort direkt auf dem 20-Byte-Eintragsfeld; bei bis zu
+;  128 Eintraegen voellig ausreichend und leicht korrekt zu halten.
+;  BX = Panel-Basis. Erhaelt BX.
+; ============================================================================
+sort_panel_bx:
+    push bx
+    push si
+    push di
+    mov cx,[bx+P_CNT]
+    cmp cx,2
+    jb sp_done               ; 0 oder 1 Eintrag -> nichts zu tun
+    ; DI laeuft von Eintrag 1 bis N-1 (der "einzusortierende")
+    mov word [sp_i],1
+sp_outer:
+    mov ax,[sp_i]
+    cmp ax,[bx+P_CNT]
+    jae sp_done
+    ; aktuellen Eintrag i nach sortbuf kopieren (der "Schluessel")
+    mov ax,[sp_i]
+    call ent_addr            ; SI = Adresse Eintrag i
+    mov di,sortbuf
+    mov cx,ENTSZ
+    call copy20
+    ; j = i-1; solange j>=0 und entry[j] > key: entry[j+1]=entry[j]; j--
+    mov ax,[sp_i]
+    dec ax
+    mov [sp_j],ax
+sp_inner:
+    cmp word [sp_j],0
+    jl sp_place              ; j < 0 -> Platz gefunden
+    ; vergleiche entry[j] (SI) mit key (sortbuf)
+    mov ax,[sp_j]
+    call ent_addr            ; SI = entry[j]
+    mov di,sortbuf
+    call entry_gt            ; CF=1 wenn entry[j] > key
+    jnc sp_place
+    ; entry[j] > key -> nach entry[j+1] schieben
+    mov ax,[sp_j]
+    call ent_addr            ; SI = entry[j] (Quelle)
+    mov ax,[sp_j]
+    inc ax
+    call ent_addr_di         ; DI = entry[j+1] (Ziel)
+    mov cx,ENTSZ
+    call copy20
+    dec word [sp_j]
+    jmp sp_inner
+sp_place:
+    ; key nach entry[j+1]
+    mov ax,[sp_j]
+    inc ax
+    call ent_addr_di         ; DI = entry[j+1]
+    mov si,sortbuf
+    mov cx,ENTSZ
+    call copy20
+    inc word [sp_i]
+    jmp sp_outer
+sp_done:
+    pop di
+    pop si
+    pop bx
+    ret
+
+; ent_addr: SI = Adresse von Eintrag AX in Panel BX
+ent_addr:
+    push ax
+    push dx
+    mov dx,ENTSZ
+    mul dx
+    mov si,ax
+    add si,bx
+    add si,P_DATA
+    pop dx
+    pop ax
+    ret
+
+; ent_addr_di: DI = Adresse von Eintrag AX in Panel BX
+ent_addr_di:
+    push ax
+    push dx
+    mov dx,ENTSZ
+    mul dx
+    mov di,ax
+    add di,bx
+    add di,P_DATA
+    pop dx
+    pop ax
+    ret
+
+; copy20: CX Bytes von DS:SI nach DS:DI. Erhaelt nichts ausser Flags egal.
+copy20:
+    push ax
+cp20_l:
+    mov al,[si]
+    mov [di],al
+    inc si
+    inc di
+    dec cx
+    jnz cp20_l
+    pop ax
+    ret
+
+; entry_gt: vergleicht Eintrag bei SI ("A") mit Eintrag bei DI ("B").
+; Setzt CF=1, wenn A > B in NC-Reihenfolge (A gehoert HINTER B), sonst CF=0.
+; Ordnung: Rang 0=".." , 1=Verzeichnis, 2=Datei. Bei gleichem Rang: Name
+; alphabetisch (grossschrift-normalisiert). Erhaelt SI/DI nicht noetig.
+entry_gt:
+    push ax
+    push bx
+    push cx
+    push si
+    push di
+    ; Rang von A nach BL, Rang von B nach BH
+    call entry_rank          ; AL = Rang(SI)
+    mov bl,al
+    xchg si,di
+    call entry_rank          ; AL = Rang(di jetzt in SI)
+    mov bh,al
+    xchg si,di               ; SI=A, DI=B wiederherstellen
+    cmp bl,bh
+    ja eg_true               ; Rang(A) > Rang(B) -> A hinter B
+    jb eg_false              ; Rang(A) < Rang(B) -> A vor B
+    ; gleicher Rang -> Namen vergleichen (SI=A-Name, DI=B-Name, ASCIIZ)
+eg_cmp:
+    mov al,[si]
+    mov ah,[di]
+    call upcase_al
+    xchg al,ah
+    call upcase_al
+    xchg al,ah               ; AL=upper(A-Zeichen), AH=upper(B-Zeichen)
+    cmp al,ah
+    ja eg_true               ; A-Zeichen groesser -> A hinter B
+    jb eg_false
+    ; gleich: Ende erreicht?
+    or al,al
+    jz eg_false              ; beide zu Ende, gleich -> nicht ">" (stabil)
+    inc si
+    inc di
+    jmp eg_cmp
+eg_true:
+    pop di
+    pop si
+    pop cx
+    pop bx
+    pop ax
+    stc
+    ret
+eg_false:
+    pop di
+    pop si
+    pop cx
+    pop bx
+    pop ax
+    clc
+    ret
+
+; entry_rank: AL = Sortierrang des Eintrags bei SI.
+;   0 = ".."  1 = Verzeichnis  2 = Datei
+entry_rank:
+    push bx
+    ; ".."? Name[0]='.' und Name[1]='.'
+    mov al,[si]
+    cmp al,'.'
+    jne er_notdd
+    mov al,[si+1]
+    cmp al,'.'
+    jne er_notdd
+    mov al,0
+    jmp er_done
+er_notdd:
+    mov al,[si+E_ATTR]
+    test al,10h
+    jz er_file
+    mov al,1                 ; Verzeichnis
+    jmp er_done
+er_file:
+    mov al,2                 ; Datei
+er_done:
+    pop bx
+    ret
+
+; upcase_al: AL -> Grossbuchstabe, falls a-z
+upcase_al:
+    cmp al,'a'
+    jb uc_ret
+    cmp al,'z'
+    ja uc_ret
+    sub al,20h
+uc_ret:
     ret
 
 ; ============================================================================
@@ -1989,7 +2183,7 @@ mono_dir:   db 27,'[1m$'          ; bold/full intensity
 mono_file:  db 27,'[0m$'          ; normal (half on mono screen)
 mono_sys:   db 27,'[7m$'          ; reverse (was blink, too distracting)
 
-titletxt:  db ' DMVCMD v8.4  dual-panel file manager','$'
+titletxt:  db ' DMVCMD v1.0  dual-panel file manager','$'
 statustxt: db ' jk/arrows  TAB swap  ENTER dir  c copy  d drive  m mono  t top  q quit','$'
 allfiles:  db '*.*',0
 dotdot:    db '..',0
@@ -2038,6 +2232,9 @@ brcol:     dw 0
 numlen:    dw 0
 numbuf:    db 12 dup(0)
 numtmp:    db 12 dup(0)
+sp_i:      dw 0
+sp_j:      dw 0
+sortbuf:   db 20 dup(0)
 txt_dir:   db '    <DIR>$'
 cwdbuf:    db 64 dup(0)
 curattr:   db 0

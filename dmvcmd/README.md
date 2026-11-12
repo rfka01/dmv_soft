@@ -12,15 +12,19 @@ Volkov, DOS Navigator, NonameCommander) schreiben direkt in den Bildspeicher
 
 - `dmvcmd.asm` – Quelltext (8086, NASM-Syntax)
 - `cpu8086.inc` – erzwingt den 8086-Befehlssatz beim Übersetzen
-- `build.sh` – NASM-Build (nur 8086) + Datendiskette schreiben
+- `build.sh` – NASM-Build (nur 8086) + versionierte Datendiskette schreiben
+- `test.sh` – Abbild kopflos im DMV-MAME prüfen (A: DOS, B: Daten)
 - `mkdata360.py` – leere 360-KB-Datendiskette (FAT12, ohne DOS) erzeugen
-- `mkimage.py` – Dateien in ein FAT12-Abbild einfügen/ersetzen
+- `mkimage.py` – Dateien mit echtem Build-Datum in ein FAT12-Abbild einfügen/ersetzen
 - `fat12.py` / `fat12write.py` – FAT12 lesen / eine Datei ersetzen
 - `DC.BAT` – ruft auf dem Abbild `DMVCMD` auf
 
+Von `build.sh` erzeugt (nicht im Repo): `dmvcmd.com` und die
+Versions-Textdatei `DMVCMD.V10`.
+
 ## Datenträger
 
-Das gebaute Abbild (`../images/dmvcmd.img`) ist eine **reine Datendiskette
+Das gebaute Abbild (`../images/dmvcmd_v10.img`) ist eine **reine Datendiskette
 ohne DOS**. Format: 360 KB, FAT12, Datensatzkennung (media descriptor)
 **0xFD**, BPB nach dem DOS-3.3-Port (dmv_os, `build_img.py`): bps=512, spc=2,
 nroot=112, tot=720, spf=2, spt=9, heads=2, cyls=40. Der Bootsektor ist
@@ -35,3 +39,6 @@ zweites Laufwerk (B:) einlegen, dann `B:` und `DC` eingeben.
 Tasten: Pfeile bzw. `j`/`k` bewegen, `TAB` wechselt die Spalte, `ENTER`
 öffnet ein Verzeichnis, `c` kopiert, `d` wählt das Laufwerk, `m` schaltet
 Farbe/Mono, `t` springt nach oben, `q` beendet.
+
+Die Einträge sind sortiert: zuerst `..`, dann Verzeichnisse, dann Dateien,
+jeweils alphabetisch.

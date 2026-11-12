@@ -8,8 +8,17 @@
 #
 # Jede DATEI wird unter ihrem (grossgeschriebenen) 8.3-Basisnamen abgelegt.
 # Existiert der Name schon, wird er ersetzt; sonst neu angelegt.
-import struct, sys, os
+import struct, sys, os, time
 from fat12 import F12
+
+
+def _dos_datetime(path):
+    """mtime der Datei -> (FAT-Zeitwort, FAT-Datumswort)."""
+    t = time.localtime(os.path.getmtime(path))
+    jahr = max(1980, t.tm_year)
+    date = ((jahr - 1980) << 9) | (t.tm_mon << 5) | t.tm_mday
+    tim = (t.tm_hour << 11) | (t.tm_min << 5) | (t.tm_sec // 2)
+    return tim & 0xFFFF, date & 0xFFFF
 
 
 def _dos83(name):
@@ -104,6 +113,9 @@ def build(basepath, outpath, files):
         e[0:8] = nm8.encode('latin1')
         e[8:11] = ex3.encode('latin1')
         e[0x0b] = 0x20                                # Archiv-Bit
+        tim, date = _dos_datetime(path)               # echte Build-Zeit
+        struct.pack_into('<H', e, 0x16, tim)          # Zeit
+        struct.pack_into('<H', e, 0x18, date)         # Datum
         struct.pack_into('<H', e, 0x1a, use[0])
         struct.pack_into('<I', e, 0x1c, len(data))
         d[entoff:entoff + 32] = e

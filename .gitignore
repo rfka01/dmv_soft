@@ -4,5 +4,7 @@
 *.o
 __pycache__/
 *.pyc
+# von build.sh erzeugte Versions-Textdatei (DMVCMD.V10 usw.)
+DMVCMD.V[0-9]*
 # MAME-Schnappschüsse
 snap/
