@@ -7,6 +7,7 @@ mit Z80 und 8088 aus den 1980er-Jahren. Alles läuft unter MS-DOS 2.11
 | Programm | Verzeichnis | Stand |
 |---|---|---|
 | DMVCMD – ANSI-Dualpanel-Dateimanager | `dmvcmd/` | v1.0, in MAME getestet |
+| GEM: Anwendungen, Zubehör, Bildschirmschriften (System folgt) | `gem/` | Stufe 3x, in MAME getestet |
 
 Gebaute 360-KB-Sektorabbilder liegen in `images/`. Es sind **reine
 Datendisketten ohne DOS** – es wird kein fremder Betriebssystemcode
@@ -45,4 +46,8 @@ ein Bildschirmfoto. Die DOS-Startdiskette ist **nicht** Teil dieses Repos
 
 ## Lizenz
 
-Eigener Code unter MIT (siehe `LICENSE`). Kein fremder Code im Repo.
+Eigener Code unter MIT (siehe `LICENSE`). Kein fremder Code im Repo –
+mit zwei benannten Ausnahmen unter `gem/`: das von Caldera unter der GPL
+freigegebene GEM (`gem/system/`, eigene GPL-LICENSE) und freie
+Vorlagenschriften mit ihren Lizenzen (`gem/schriften/quellen/`, OFL bzw.
+GUST).

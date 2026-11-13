@@ -8,3 +8,4 @@ __pycache__/
 DMVCMD.V[0-9]*
 # MAME-Schnappschüsse
 snap/
+/gem/anwendungen/aus/
