@@ -8,11 +8,21 @@ mit Z80 und 8088 aus den 1980er-Jahren. Alles läuft unter MS-DOS 2.11
 |---|---|---|
 | DMVCMD – ANSI-Dualpanel-Dateimanager | `dmvcmd/` | v1.0, in MAME getestet |
 | GEM: Anwendungen, Zubehör, Bildschirmschriften (System folgt) | `gem/` | Stufe 3x, in MAME getestet |
+| SYNDEMO – Synthesizer-Demo und Programmierschnittstelle | `SYNDEMO/` | in MAME getestet |
+| DMVTRAK – MOD-Player und Tracker | `DMVTRAK/` | in MAME getestet |
+
+SYNDEMO und DMVTRAK brauchen die Firmware
+[EXTKB](https://github.com/rfka01/dmv_hardware/tree/main/EXTKB) im
+Tastaturcontroller; sie lag bis November 2026 im selben Repo wie die
+Firmware und ist seitdem hier, weil sie Anwendung ist und nicht Hardware.
+Beide bringen ihre Abbilder und Quellen in eigenen Unterverzeichnissen
+(`Images/`, `Sourcen/`) mit.
 
 Gebaute 360-KB-Sektorabbilder liegen in `images/`. Es sind **reine
 Datendisketten ohne DOS** – es wird kein fremder Betriebssystemcode
 mitgeliefert. Zum Benutzen von einer eigenen DOS-Startdiskette booten und
-das Datenabbild als weiteres Laufwerk einlegen.
+das Datenabbild als weiteres Laufwerk einlegen. Dasselbe gilt für
+`SYNDEMO/Images/SYNDEMO.IMG` und `DMVTRAK/Images/DMVSOUND.IMG`.
 
 ## Bauen
 
